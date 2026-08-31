@@ -82,4 +82,502 @@
     .hallway-btn {
       background-color: #e0b0ff; /* Light purple default */
       border: none;
+      border-radius: 8px;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: background-color 0.2s;
+    }
+
+    .hallway-btn.active-red {
+      background-color: #ff4d4d;
+      color: white;
+    }
+
+    .hallway-btn.active-green {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .timer-text {
+      font-size: 1.2rem;
+      margin-top: 5px;
+    }
+
+    /* Testing Window Box */
+    .testing-box {
+      flex-grow: 1;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 1.3rem;
+      font-weight: bold;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .testing-open {
+      background-color: #4caf50;
+    }
+
+    .testing-closed {
+      background-color: #ff4d4d;
+    }
+
+    /* Bathroom Section */
+    .bathroom-btn-container {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .bathroom-btn {
+      flex: 1;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 5px;
+    }
+
+    .girls-btn {
+      background-color: #4caf50;
+    }
+
+    .boys-btn {
+      background-color: #2196f3;
+    }
+
+    .bathroom-btn.occupied {
+      background-color: #ff4d4d !important;
+    }
+
+    /* Modal Styling */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .modal-btn {
+      padding: 12px;
+      font-size: 1.1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background: #f9f9f9;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .modal-btn:hover {
+      background: #e9e9e9;
+    }
+
+    .close-btn {
+      background: #777;
+      color: white;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <div class="left-section">
+    <div class="section-title">Hallway Checkout</div>
+    <div class="grid-container" id="hallway-grid"></div>
+  </div>
+
+  <div class="right-section">
+    <div class="testing-section">
+      <div class="section-title">Testing Window</div>
+      <div id="testing-box" class="testing-box">Checking time...</div>
+    </div>
+
+    <div class="bathroom-section">
+      <div class="section-title">Bathroom</div>
+      <div class="bathroom-btn-container">
+        <button id="girls-btn" class="bathroom-btn girls-btn" onclick="handleBathroomClick('Girls')">Girls</button>
+        <button id="boys-btn" class="bathroom-btn boys-btn" onclick="handleBathroomClick('Boys')">Boys</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal" class="modal">
+    <div class="modal-content" id="modal-content"></div>
+  </div>
+
+  <script>
+    // --- Roster Data ---
+    const rosters = {
+      Teplinski: [
+        "Bianca Belyi", "Varnit Bhatt", "Melina Britt", "Shanaya Choudhary",
+        "Aadvik Dwivedi", "Pierce Hawking", "Niaya Jacob", "Nathan Jin",
+        "Smahi Karhade", "Athiya Kolachina", "Evan Kopinski", "Zayden Krasner",
+        "Sahasrika Moganti", "Talia Portnoy", "Eliya Shaked", "Terrence Shao",
+        "Vihaan Sharma", "Arina Simkin", "George Spidle", "Yonatan Terem",
+        "Suld Tsogtbaatar", "Aahil Vicas"
+      ],
+      Murdach: [
+        "Shiloh Ade", "Jaishnavi Balasubramanian", "Sriram Reddy Chichili", "Tanaya Chopra",
+        "Emil Gara", "Aadhya Goteti", "Hunter Krenz-Aemisegger", "Colette Lee",
+        "Steffan Mahaha", "Vihaan Malepati", "Aleksandra Molchanov", "Nicholas Page",
+        "Adwaidan Palaniappan", "Sofiia Pylypenko", "Naisha Sengar", "Annette Simon",
+        "Dennis Sivachev", "Anamitra Suyamburajan", "Tuguldur Tugsbayar", "Ragnar Urmatbekov",
+        "Arjun Vinodkumar", "Alyssa Weller"
+      ],
+      Salus: [
+        "Nilufar Aynazarova", "Alexey Berezovchuk", "Meenakshi Bhagavathula", "Aarav Bhatia",
+        "Swara Bidkar", "Atharva Dubal", "Michael Dzhurylyuk", "Baylee Hundley",
+        "Saanvi Katrue", "Nivedh Kola", "Lauren Lim", "Braxton Lookis",
+        "Nikita Lunev", "Miles Mergen", "Ivan Mishra", "Viti Nagaraja",
+        "Aksharasree Rajadurai", "Yudith Dev Sathish", "Mari Schwartz", "Dylan Shekhter",
+        "Aadya Sinha", "Krish Yeshwanth"
+      ]
+    };
+
+    let loggedStudents = new Set();
+    let pdfDownloadedToday = false;
+
+    // --- 1. Hallway Checkout Setup ---
+    const hallwayGrid = document.getElementById('hallway-grid');
+    const hallwayStates = Array.from({ length: 12 }, () => ({
+      timer: null,
+      timeLeft: 300,
+      active: false,
+      speechTriggered: false
+    }));
+
+    for (let i = 1; i <= 12; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'hallway-btn';
+      btn.id = `hallway-${i}`;
+      btn.innerHTML = `<span>${i}</span><span class="timer-text" id="time-${i}"></span>`;
+      btn.onclick = () => toggleHallwayTimer(i);
+      hallwayGrid.appendChild(btn);
+    }
+
+    function toggleHallwayTimer(index) {
+      const state = hallwayStates[index - 1];
+      const btn = document.getElementById(`hallway-${index}`);
+      const timerDisplay = document.getElementById(`time-${index}`);
+
+      if (!state.active) {
+        // Start Timer
+        state.active = true;
+        state.timeLeft = 300;
+        state.speechTriggered = false;
+        btn.className = 'hallway-btn active-red';
+        
+        state.timer = setInterval(() => {
+          state.timeLeft--;
+          updateDisplay();
+
+          if (state.timeLeft <= 0) {
+            clearInterval(state.timer);
+            if (!state.speechTriggered) {
+              speakGroup(index);
+              state.speechTriggered = true;
+            }
+          }
+        }, 1000);
+      } else {
+        // Reset to Green / Default Cancel
+        clearInterval(state.timer);
+        state.active = false;
+        btn.className = 'hallway-btn active-green';
+        timerDisplay.textContent = '';
+      }
+
+      function updateDisplay() {
+        const mins = Math.floor(state.timeLeft / 60);
+        const secs = state.timeLeft % 60;
+        timerDisplay.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+      }
+
+      if (state.active) updateDisplay();
+    }
+
+    function speakGroup(num) {
+      if ('speechSynthesis' in window) {
+        const text = `group ${num}, group ${num}, group ${num}`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    // --- 2. Testing Window Setup ---
+    function checkTestingWindow() {
+      const now = new Date();
+      
+      // Convert current time to Central Standard Time (CST)
+      const options = { timeZone: 'America/Chicago', hour12: false, hour: '2-digit', minute: '2-digit' };
+      const cstTimeString = new Intl.DateTimeFormat([], options).format(now);
+      const [hours, minutes] = cstTimeString.split(':').map(Number);
+      const currentMin = hours * 60 + minutes;
+
+      // Intervals in minutes from midnight
+      const windows = [
+        { start: 8 * 60 + 15, end: 8 * 60 + 40 },   // 8:15 - 8:40
+        { start: 9 * 60 + 45, end: 10 * 60 + 10 },  // 9:45 - 10:10
+        { start: 10 * 60 + 25, end: 10 * 60 + 50 }  // 10:25 - 10:50
+      ];
+
+      const isOpen = windows.some(w => currentMin >= w.start && currentMin <= w.end);
+      const box = document.getElementById('testing-box');
+
+      if (isOpen) {
+        box.textContent = "Testing Window Open";
+        box.className = "testing-box testing-open";
+      } else {
+        box.textContent = "Testing Window Closed";
+        box.className = "testing-box testing-closed";
+      }
+
+      // 2:30 PM CST PDF Auto-Download Trigger (14:30)
+      if (hours === 14 && minutes === 30 && !pdfDownloadedToday) {
+        generatePDF();
+        pdfDownloadedToday = true;
+      }
+      if (hours === 0 && minutes === 0) {
+        pdfDownloadedToday = false; // Reset PDF trigger at midnight
+      }
+    }
+
+    setInterval(checkTestingWindow, 5000);
+    checkTestingWindow();
+
+    // --- 3. Bathroom Section Setup ---
+    let currentGenderTarget = null;
+    const bathroomStates = {
+      Girls: { active: false, name: '', elapsed: 0, timer: null },
+      Boys: { active: false, name: '', elapsed: 0, timer: null }
+    };
+
+    function handleBathroomClick(gender) {
+      const state = bathroomStates[gender];
+      const btn = document.getElementById(`${gender.toLowerCase()}-btn`);
+
+      if (state.active) {
+        // Stop timer & Reset
+        clearInterval(state.timer);
+        state.active = false;
+        state.name = '';
+        state.elapsed = 0;
+        btn.classList.remove('occupied');
+        btn.innerHTML = gender;
+      } else {
+        // Open Teacher Selection Modal
+        currentGenderTarget = gender;
+        showTeacherModal();
+      }
+    }
+
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modal-content');
+
+    function closeModal() {
+      modal.style.display = 'none';
+    }
+
+    function showTeacherModal() {
+      modalContent.innerHTML = `
+        <h3>Select Teacher</h3>
+        <button class="modal-btn" onclick="showStudentModal('Murdach')">Murdach</button>
+        <button class="modal-btn" onclick="showStudentModal('Salus')">Salus</button>
+        <button class="modal-btn" onclick="showStudentModal('Teplinski')">Teplinski</button>
+        <button class="modal-btn close-btn" onclick="closeModal()">Cancel</button>
+      `;
+      modal.style.display = 'flex';
+    }
+
+    function showStudentModal(teacher) {
+      const list = rosters[teacher];
+      let html = `<h3>Select Student (${teacher})</h3>`;
+      list.forEach(name => {
+        // Escape apostrophes if any exist in student names
+        const safeName = name.replace(/'/g, "\\'");
+        html += `<button class="modal-btn" onclick="selectStudent('${safeName}')">${name}</button>`;
+      });
+      html += `<button class="modal-btn close-btn" onclick="closeModal()">Cancel</button>`;
+      modalContent.innerHTML = html;
+    }
+
+    function selectStudent(studentName) {
+      closeModal();
+      loggedStudents.add(studentName);
+
+      const gender = currentGenderTarget;
+      const state = bathroomStates[gender];
+      const btn = document.getElementById(`${gender.toLowerCase()}-btn`);
+
+      state.active = true;
+      state.name = studentName;
+      state.elapsed = 0;
+      btn.classList.add('occupied');
+
+      updateBathroomDisplay(gender);
+
+      state.timer = setInterval(() => {
+        state.elapsed++;
+        updateBathroomDisplay(gender);
+      }, 1000);
+    }
+
+    function updateBathroomDisplay(gender) {
+      const state = bathroomStates[gender];
+      const btn = document.getElementById(`${gender.toLowerCase()}-btn`);
+      const mins = Math.floor(state.elapsed / 60);
+      const secs = state.elapsed % 60;
+      const timeStr = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+      btn.innerHTML = `<div>${state.name}</div><div style="font-size: 1.2rem; margin-top:5px;">${timeStr}</div>`;
+    }
+
+    // --- PDF Export Logic ---
+    function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      const today = new Date().toLocaleDateString();
+      doc.setFontSize(16);
+      doc.text(`Bathroom Sign-out Log - ${today}`, 20, 20);
+
+      doc.setFontSize(12);
+      let y = 35;
+
+      if (loggedStudents.size === 0) {
+        doc.text("No student checkouts recorded today.", 20, y);
+      } else {
+        loggedStudents.forEach(student => {
+          doc.text(`- ${student}`, 20, y);
+          y += 10;
+          if (y > 280) { // Add new page if list exceeds page height
+            doc.addPage();
+            y = 20;
+          }
+        });
+      }
+
+      doc.save(`Bathroom_Log_${today.replace(/\//g, '-')}.pdf`);
+    }
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Classroom Timer Dashboard</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background-color: #f4f4f9;
+      height: 100vh;
+      display: flex;
+      padding: 10px;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    /* Layout Sections */
+    .left-section {
+      width: 75vw;
+      height: calc(100vh - 20px);
+      background-color: #ffffff;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+    }
+
+    .right-section {
+      width: 25vw;
+      height: calc(100vh - 20px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .testing-section {
+      height: 33.33%;
+      background-color: #ffffff;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+    }
+
+    .bathroom-section {
+      height: 66.66%;
+      background-color: #ffffff;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      gap: 10px;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    /* Hallway Checkout Grid */
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 10px;
+      flex-grow: 1;
+    }
+
+    .hallway-btn {
+      background-color: #e0b0ff; /* Light purple default */
+      border: none;
       border-radius: 8
